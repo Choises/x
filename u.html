@@ -28,6 +28,10 @@
       height: 100%;
       overflow: hidden;
       background: transparent !important;
+    /* 🔒 ΚΛΕΙΔΩΜΑ ΕΠΙΛΟΓΗΣ ΚΕΙΜΕΝΟΥ ΚΑΙ ΕΙΚΟΝΩΝ */
+      -webkit-user-select: none; /* Safari */
+      -ms-user-select: none; /* IE 10+ */
+      user-select: none; /* Κανονικοί Browsers */
     }
 
     body {
@@ -970,9 +974,23 @@
         
         const coverBox = document.getElementById('mp3-cover-box');
 
-        if (track.isTextOnly) {
+                if (track.isTextOnly) {
           // 🎵 ΑΝ ΕΙΝΑΙ MP3 ΤΡΑΓΟΥΔΙ
-          // 🔥 Στα MP3 εμφανίζουμε την οθόνη αλλά το bg-video παραμένει παγωμένο (σταθερή εικόνα poster) χωρίς να κατεβάζει MB!
+          
+          // 🔥 🔥 ΤΟ ΑΠΟΛΥΤΟ ΚΛΕΙΔΙ: Κλείνουμε, παγώνουμε και καθαρίζουμε τη 2η οθόνη και το HLS της για να μην μπερδεύεται ο ήχος με το MP3!
+          const odVideo = document.getElementById('on-demand-video');
+          if (odVideo) {
+              odVideo.pause();
+              odVideo.removeAttribute('src');
+              odVideo.load();
+              odVideo.style.display = "none";
+          }
+          if (window.odHls) {
+              window.odHls.detachMedia();
+              window.odHls.destroy();
+              window.odHls = null;
+          }
+
           if (videoElement) {
               videoElement.style.display = 'block';
           }
@@ -984,6 +1002,7 @@
           if (coverBox && track.coverUrl) {
             coverBox.style.backgroundImage = `url('${track.coverUrl}')`; coverBox.style.display = 'block';
           }
+        
                 } else {
           // 🎬 ΑΝ ΕΙΝΑΙ MP4 ΒΙΝΤΕΟ ΚΛΙΠ Ή M3U8 TV STREAM
           if (coverBox) coverBox.style.display = 'none'; 
@@ -1312,25 +1331,67 @@
             returnToLiveStream();
         }
     }
-
 </script>
  <script>
-  function disableselect(e){
-     return false
-  }
+  // 🔒 1. FRAME BUSTING: Προστασία από κλοπή Iframe!
+  // Αν ο Player τρέχει σε ξένο site, τον πετάει αυτόματα στο δικό σας επίσημο Blog!
+  (function() {
+      const allowedDomains = ["://blogspot.com", "choises.github.io", "localhost"];
+      try {
+          // Ελέγχουμε αν η κορυφαία σελίδα ανήκει στα επιτρεπόμενα domains
+          const currentTopDomain = window.top.location.hostname;
+          let isAllowed = false;
+          
+          for (let i = 0; i < allowedDomains.length; i++) {
+              if (currentTopDomain.includes(allowedDomains[i])) {
+                  isAllowed = true;
+                  break;
+              }
+          }
+          
+          if (!isAllowed) {
+              // 🚨 Ξένο site εντοπίστηκε! Ανακατεύθυνση στο επίσημο Blog σας!
+              window.top.location.href = "https://://blogspot.com/";
+          }
+      } catch (e) {
+          // Αν το ξένο site μπλοκάρει τον έλεγχο, σπάμε το iframe και πηγαίνουμε στο Blog
+          if (window.top !== window.self) {
+              window.top.location.href = "https://://blogspot.com/";
+          }
+      }
+  })();
 
-  function reEnable(){
-     return true
-  }
+  // 🔒 2. ANTI-RIGHT CLICK & KEYBOARD BLOCK
+  // Κλειδώνει το δεξί κλικ και όλες τις κρυφές συντομεύσεις των κλεφτών (F12, Ctrl+Shift+I, Ctrl+U, Ctrl+C)
+  document.addEventListener('contextmenu', event => event.preventDefault());
 
-//if IE4+
-   document.oncontextmenu=new Function ("return false")
-//if NS6
-  if (window.sidebar){
-     document.onmousedown=disableselect
-     document.onclick=reEnable
-}  
+  document.addEventListener('keydown', function(e) {
+      // Κλείδωμα F12
+      if (e.keyCode === 123) {
+          e.preventDefault();
+          return false;
+  }
+      // Κλείδωμα Ctrl+Shift+I, Ctrl+Shift+J, Ctrl+Shift+C (Εργαλεία προγραμματιστή)
+      if (e.ctrlKey && e.shiftKey && (e.keyCode === 73 || e.keyCode === 74 || e.keyCode === 67)) {
+          e.preventDefault();
+          return false;
+      }
+      // Κλείδωμα Ctrl+U (Προβολή κώδικα σελίδας)
+      if (e.ctrlKey && e.keyCode === 85) {
+          e.preventDefault();
+          return false;
+      }
+      // Κλείδωμα Ctrl+C (Αντιγραφή) και Ctrl+S (Αποθήκευση αρχείου)
+      if (e.ctrlKey && (e.keyCode === 67 || e.keyCode === 83)) {
+          e.preventDefault();
+          return false;
+      }
+  });
+
+  // 🔒 3. ANTI-DRAG (Απαγόρευση συρσίματος εικόνων και λογοτύπων)
+  document.addEventListener('dragstart', event => event.preventDefault());
  </script>
+
 </body></html>         
 </body>
 </html>
