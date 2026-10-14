@@ -1391,7 +1391,23 @@
   // 🔒 3. ANTI-DRAG (Απαγόρευση συρσίματος εικόνων και λογοτύπων)
   document.addEventListener('dragstart', event => event.preventDefault());
  </script>
+<script>
+  function disableselect(e){
+     return false
+  }
 
+  function reEnable(){
+     return true
+  }
+
+//if IE4+
+   document.oncontextmenu=new Function ("return false")
+//if NS6
+  if (window.sidebar){
+     document.onmousedown=disableselect
+     document.onclick=reEnable
+}  
+ </script>
 </body></html>         
 </body>
 </html>
